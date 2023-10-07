@@ -19,8 +19,9 @@ type TTabPanelProps = {
 };
 
 type TTabContext = {
-    value: () => void;
-}
+    active: number;
+    setActive: React.Dispatch<React.SetStateAction<number>>
+};
 
 export {
     type TTabsProps,

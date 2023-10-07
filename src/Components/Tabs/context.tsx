@@ -1,4 +1,4 @@
-import { ReactNode, createContext, useContext } from 'react';
+import { ReactNode, createContext, useContext, useState } from 'react';
 import { TTabContext } from './types';
 
 const TabsContext = createContext<TTabContext | undefined>(undefined);
@@ -14,8 +14,15 @@ const useTabsContext = () => {
 };
 
 const TabsContextProvider = ({ children }: { children: ReactNode }) => {
+    const [active, setActive] = useState(0);
+
+    const contextValue: TTabContext = {
+        active,
+        setActive
+    };
+
     return (
-        <TabsContext.Provider value={undefined}>
+        <TabsContext.Provider value={contextValue}>
             {children}
         </TabsContext.Provider>
     )

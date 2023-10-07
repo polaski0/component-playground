@@ -1,5 +1,4 @@
 import './Tabs.css';
-import React from 'react';
 import { TTabListProps, TTabPanelsProps, TTabProps, TTabsProps } from './types';
 import { TabsContextProvider, useTabsContext } from './context';
 
