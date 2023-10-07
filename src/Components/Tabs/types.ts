@@ -8,7 +8,10 @@ type TTabListProps = {
     children: React.ReactNode;
 };
 
-type TTabProps = ButtonHTMLAttributes<HTMLButtonElement>;
+type TTabProps = {
+    id: string;
+} & ButtonHTMLAttributes<HTMLButtonElement>;
+type TTabRef = HTMLButtonElement;
 
 type TTabPanelsProps = {
     children: React.ReactNode;
@@ -23,11 +26,12 @@ type TTabContext = {
     setActive: React.Dispatch<React.SetStateAction<number>>
 };
 
-export {
-    type TTabsProps,
-    type TTabListProps,
-    type TTabProps,
-    type TTabPanelsProps,
-    type TTabPanelProps,
-    type TTabContext
+export type {
+    TTabsProps,
+    TTabListProps,
+    TTabProps,
+    TTabRef,
+    TTabPanelsProps,
+    TTabPanelProps,
+    TTabContext
 };

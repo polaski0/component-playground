@@ -8,7 +8,7 @@ export const TabsDemo = () => {
             <Tabs>
                 <TabList>
                     {
-                        _tabs.map((_, index) => <Tab key={index}>Button {index + 1}</Tab>)
+                        _tabs.map((_, index) => <Tab key={index} id={`${index}`}>Button {index + 1}</Tab>)
                     }
                 </TabList>
                 <TabPanels>
