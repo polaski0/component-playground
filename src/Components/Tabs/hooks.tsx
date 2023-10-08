@@ -3,6 +3,8 @@
  * Components with hooks
  * Used for headless UI
  * 
+ * THIS WILL BE IMPLEMENTED IN THE FUTURE
+ * 
  * Level of Priority
  * * - Low
  * ** - Medium
@@ -24,6 +26,7 @@
  * useTabPanel
  *  - Handles selected content ***
  *  - Handles aria for tab panel role
+ * 
  */
 import { useState } from "react";
 import { TTabProps } from "./types";
@@ -50,11 +53,11 @@ const useTab = (props: TTabProps) => {
 };
 
 const useTabList = () => {
-
+    // code here...
 };
 
 const useTabPanel = () => {
-
+    // code here...
 };
 
 export {

@@ -1,65 +1,59 @@
 import "./Tabs.css";
-import { TTabListProps, TTabPanelsProps, TTabProps, TTabRef, TTabsProps } from "./types";
-import { TabsContextProvider } from "./context";
+import { TTabListProps, TTabPanelProps, TTabPanelsProps, TTabProps, TTabRef, TTabsProps } from "./types";
+import { TabsContextProvider, useTabsContext } from "./context";
 import { forwardRef } from "react";
-import { useTab } from "./hooks";
 import { classNames } from "./utils";
 
-const Tabs = ({ children }: TTabsProps) => {
+const Tabs = ({ defaultValue, children, ...props }: TTabsProps) => {
     return (
-        <TabsContextProvider>
-            <div className="__common-ui-tabs">
+        <TabsContextProvider defaultValue={defaultValue}>
+            <div className="__common-ui-tabs" {...props}>
                 {children}
             </div>
         </TabsContextProvider>
     )
 };
 
-const TabList = ({ children }: TTabListProps) => {
-    // const context = useTabsContext();
-
+const TabList = ({ children, ...props }: TTabListProps) => {
     return (
-        <div className={`__common-ui-tab-list`}>
+        <div className={`__common-ui-tab-list`} {...props}>
             {children}
         </div>
     )
 };
 
 const Tab = forwardRef<TTabRef, TTabProps>(({ children, ...props }, ref) => {
-    // const context = useTabsContext();
-
-    const {
-        tabProps,
-        id,
-        isDisabled,
-        isSelected,
-        setSelectedKey
-    } = useTab(props);
+    const { selectedTab, setSelectedTab } = useTabsContext();
+    const { value, onClick, ...otherProps } = props;
 
     const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-        setSelectedKey(id);
+        setSelectedTab(value);
+
+        if (onClick) {
+            onClick(e);
+        }
     }
 
     return (
-        <button id={id} ref={ref} className={classNames("__common-ui-tab", isSelected ? "active" : "", isDisabled ? "disabled" : "")} onClick={handleClick} {...tabProps}>{children}</button>
+        <button ref={ref} className={classNames("__common-ui-tab", selectedTab === value ? "active" : "")} onClick={handleClick} {...otherProps}>{children}</button>
     )
 });
 
-const TabPanels = ({ children }: TTabPanelsProps) => {
-    // const context = useTabsContext();
-
+const TabPanels = ({ children, ...props }: TTabPanelsProps) => {
     return (
-        <div className={`__common-ui-tab-panels`}>
+        <div className={`__common-ui-tab-panels`} {...props}>
             {children}
         </div>
     )
 };
 
-const TabPanel = ({ children }: TTabPanelsProps) => {
-    // const context = useTabsContext();
+const TabPanel = ({ value, children, ...props }: TTabPanelProps) => {
+    const { selectedTab } = useTabsContext();
+
+    const isToggled = selectedTab === value;
 
     return (
-        <div className={`__common-ui-tab-panel`}>
+        <div className={`__common-ui-tab-panel`} hidden={!isToggled} {...props}>
             {children}
         </div>
     )

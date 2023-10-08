@@ -1,5 +1,5 @@
-import { ReactNode, createContext, useContext, useState } from 'react';
-import { TTabContext } from './types';
+import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
+import { TTabContext, TabValue } from './types';
 
 const TabsContext = createContext<TTabContext | undefined>(undefined);
 
@@ -13,13 +13,17 @@ const useTabsContext = () => {
     return context;
 };
 
-const TabsContextProvider = ({ children }: { children: ReactNode }) => {
-    const [active, setActive] = useState(0);
+const TabsContextProvider = ({ defaultValue, children }: { defaultValue: TabValue, children: ReactNode }) => {
+    const [selectedTab, setSelectedTab] = useState("");
 
     const contextValue: TTabContext = {
-        active,
-        setActive
+        selectedTab,
+        setSelectedTab
     };
+
+    useEffect(() => {
+        setSelectedTab(defaultValue);
+    }, []);
 
     return (
         <TabsContext.Provider value={contextValue}>
