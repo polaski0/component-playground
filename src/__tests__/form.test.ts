@@ -23,7 +23,8 @@ test("form submitted to pass the validation", () => {
     };
 
     const isValid = validateValue(payload, formSchema);
-    expect(isValid).toMatchObject({});
+    console.log("SUCCESS", isValid);
+    expect(Object.keys(isValid).length).toEqual(0);
 });
 
 test("form submitted to fail the validation", () => {
@@ -33,7 +34,8 @@ test("form submitted to fail the validation", () => {
     };
 
     const isValid = validateValue(payload, formSchema);
-    expect(isValid).to.equal({
+    console.log("FAILED", isValid);
+    expect(isValid).toMatchObject({
         email: {
             required: {
                 message: "The email field is required."
