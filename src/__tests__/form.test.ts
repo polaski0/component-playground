@@ -1,8 +1,8 @@
 import { expect, test } from "vitest";
-import { validateValue } from "../Components/Form/validate";
-import { TSchema } from "../Components/Form/validate";
+import { test as validateValue } from "../Components/Form/validate2";
+import { Schema } from "../Components/Form/validate2";
 
-const formSchema: TSchema = {
+const formSchema: Schema = {
     email: {
         required: true,
         matches: {
@@ -12,7 +12,7 @@ const formSchema: TSchema = {
     },
     password: {
         required: true,
-        minLength: 8
+        min: 8
     }
 };
 
@@ -23,8 +23,8 @@ test("form submitted to pass the validation", () => {
     };
 
     const isValid = validateValue(payload, formSchema);
-    console.log("SUCCESS", isValid);
-    expect(Object.keys(isValid).length).toEqual(0);
+    // expect(Object.keys(isValid).length).toEqual(0);
+    expect(isValid).toMatchObject({ ok: 1 });
 });
 
 test("form submitted to fail the validation", () => {
@@ -34,7 +34,6 @@ test("form submitted to fail the validation", () => {
     };
 
     const isValid = validateValue(payload, formSchema);
-    console.log("FAILED", isValid);
     expect(isValid).toMatchObject({
         email: {
             required: {
