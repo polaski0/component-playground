@@ -6,8 +6,8 @@ export type GenericRules = {
     min: number;
     max: number;
 
-    alphanumeric: string;
-    alphaDash: string;
+    alpha_numeric: boolean;
+    alpha_dash: boolean;
     integer: boolean;
     string: boolean;
     matches: RegExp;
@@ -52,7 +52,7 @@ const _mockSchema: Schema = {
     }
 };
 
-function isExtendedOptions<T>(value: unknown): value is ExtendedOptions<T> {
+const isExtendedOptions = <T>(value: unknown): value is ExtendedOptions<T> => {
     if (value === null) {
         return false;
     }
@@ -63,7 +63,7 @@ function isExtendedOptions<T>(value: unknown): value is ExtendedOptions<T> {
 // Validation entry point
 //#region
 const test = (inputs: Payload, props: Schema) => {
-    const result = {};
+    const result: { [key: string]: any } = {};
 
     if (Object.keys(props).length === 0) {
         return result;
@@ -72,18 +72,44 @@ const test = (inputs: Payload, props: Schema) => {
     for (const [propKey, propValue] of Object.entries(props)) {
         const inputValue = inputs[propKey];
         const ruleSet = propValue;
+        let isRequired = isExtendedOptions(ruleSet.required) ? ruleSet.required.value : ruleSet.required ?? false;
 
         for (const [ruleSetKey, ruleSetValue] of Object.entries(ruleSet)) {
+            let key = ruleSetKey as keyof GenericRules;
+
+            if (!isRequired && (inputValue === "" || inputValue === undefined)) {
+                continue;
+            }
+
             const payload = {
                 input: inputValue,
-                props: ruleSetValue as CombineRules<PartialGenericRules>
+                value: isExtendedOptions(ruleSetValue) && ruleSetValue.value ? ruleSetValue.value : ruleSetValue
             };
 
-            const fn = rules[ruleSetKey as keyof GenericRules];
-            const error = fn(payload);
+            const fn = rules[key];
+            const error = fn(payload as any);
 
             if (error) {
-                console.log(`[${propKey} && ${ruleSetKey}]:`, inputValue, error);
+                const msg = formatMessage({
+                    key: propKey,
+                    error: {
+                        key: key,
+                        value: isExtendedOptions(ruleSetValue) && ruleSetValue.value ? ruleSetValue.value : ruleSetValue as any
+                    },
+                    message: isExtendedOptions(ruleSetValue) && ruleSetValue.message ? ruleSetValue.message : locale[key]
+                });
+
+                const err = {
+                    [ruleSetKey]: {
+                        message: msg
+                    }
+                };
+
+                if (result.hasOwnProperty(propKey)) {
+                    Object.assign(result[propKey], err);
+                } else {
+                    Object.assign(result, { [propKey]: err });
+                }
             }
         }
     }
@@ -92,134 +118,135 @@ const test = (inputs: Payload, props: Schema) => {
 }
 //#endregion
 
+type FormatMessageProps = {
+    key: string;
+    error: {
+        key: keyof GenericRules;
+        value: GenericRules[keyof GenericRules];
+    }
+    message: string;
+};
+
+const formatMessage = (args: FormatMessageProps) => {
+    let msg = args.message;
+    const { key, value } = args.error;
+
+    msg = msg.replace("{name}", args.key.replace(/_/g, " "));
+
+    try {
+        msg = msg.replace(`{${key}}`, value.toString());
+    } catch (error) {
+        console.error("Cannot convert the given value to string.");
+    }
+    
+    return msg;
+};
 
 // Validation logics
 //#region
-type RulesArgs = {
+type RulesArgs<T> = {
     input: unknown;
-    props: CombineRules<PartialGenericRules>;
+    value: T;
 };
 
 type RulesProps = {
-    [key in keyof GenericRules]: (args: RulesArgs) => string | void;
+    [key in keyof GenericRules]: (args: RulesArgs<GenericRules[key]>) => boolean;
 }
 
+/**
+ * If the function returns true, it means that the value is invalid,
+ * otherwise, valid.
+ * 
+ * @returns {boolean}
+ */
 const rules: RulesProps = {
     required(args) {
-        let msg = locale.required;
+        return validator.IsEmpty(args.input);
+    },
 
-        if (isExtendedOptions(args.props) && args.props.message && args.props.message) {
-            msg = args.props.message;
-        }
-
+    alpha_dash(args) {
         if (typeof args.input === "string") {
-            return validator.IsEmpty(args.input)
-                ? msg
-                : undefined;
+            const regex = /^[a-zA-Z0-9-_]+$/;
+            return !regex.test(args.input);
         }
 
-        return msg;
+        return true;
     },
 
-    alphaDash(args) {
-
-    },
-
-    alphanumeric(args) {
-
+    alpha_numeric(args) {
+        if (typeof args.input === "string") {
+            const regex = /^[a-zA-Z0-9]+$/;
+            return !regex.test(args.input);
+        }
+        return true;
     },
 
     contains(args) {
-
+        return !(args.value.includes(args.input));
     },
 
     email(args) {
-        let msg = locale.email;
-
-        if (isExtendedOptions(args.props) && args.props.message && args.props.message) {
-            msg = args.props.message;
+        if (typeof args.input === "string") {
+            return validator.IsEmail(args.input as string)
         }
 
-        if (typeof args.input === "string") {
-            return !validator.IsEmail(args.input)
-                ? msg
-                : undefined
-        };
-
-        return msg;
+        return true;
     },
 
     integer(args) {
-
+        return !validator.IsInteger(args.input);
     },
 
     lowercase(args) {
+        if (typeof args.input === "string") {
+            return args.input !== args.input.toLowerCase();
+        }
 
+        return true;
     },
 
     max(args) {
+        if (typeof args.input === "number" || typeof args.input === "string") {
+            return args.input.toString().length > args.value;
+        } else if (args.input instanceof Array) {
+            return args.input.length > args.value;
+        } else if (args.input instanceof Object) {
+            return Object.entries(args.input).length > args.value;
+        }
 
+        return true;
     },
 
     min(args) {
-        let v = 0;
-        let p = 0;
-        let msg = locale.min;
-
         if (typeof args.input === "number" || typeof args.input === "string") {
-            v = args.input.toString().length;
+            return args.input.toString().length < args.value;
         } else if (args.input instanceof Array) {
-            v = args.input.length;
+            return args.input.length < args.value;
+        } else if (args.input instanceof Object) {
+            return Object.entries(args.input).length < args.value;
         }
 
-        if (isExtendedOptions(args.props) && args.props.message) {
-            p = args.props.value as number;
-
-            if (args.props.message) {
-                msg = args.props.message;
-            }
-        } else {
-            p = args.props as number;
-        }
-
-        return v < p
-            ? msg
-            : undefined;
+        return true;
     },
-    
-    string(args) {
-        let msg = locale.string;
 
-        return validator.IsString(args.input)
-            ? msg
-            : undefined;
+    string(args) {
+        return !validator.IsString(args.input);
     },
 
     uppercase(args) {
+        if (typeof args.input === "string") {
+            return args.input !== args.input.toUpperCase();
+        }
 
+        return true;
     },
 
     matches(args) {
-        let regex: RegExp;
-        let msg = locale.matches;
-
-        if (isExtendedOptions(args.props) && args.props.message) {
-            regex = args.props.value as RegExp;
-
-            if (args.props.message) {
-                msg = args.props.message;
-            }
-        } else {
-            regex = args.props as RegExp;
-        }
-
         if (typeof args.input === "string") {
-            return !validator.Regex.Match(regex, args.input)
-                ? msg
-                : undefined;
+            return !validator.Regex.Match(args.value, args.input);
         }
 
-        return msg;
+        return true;
     },
 };
 //#endregion
